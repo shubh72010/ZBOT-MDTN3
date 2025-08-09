@@ -1,5 +1,6 @@
 const { Client, GatewayIntentBits, PermissionsBitField, EmbedBuilder } = require('discord.js');
 const fs = require('fs');
+const http = require('http'); // Import the http module
 
 const token = process.env.DISCORD_TOKEN;
 
@@ -50,6 +51,23 @@ const client = new Client({
 
 client.once('ready', () => {
     console.log(`Logged in as ${client.user.tag}!`);
+    
+    // Create the HTTP server to keep the bot alive on Render's free tier
+    const server = http.createServer((req, res) => {
+        // Only respond to root URL pings
+        if (req.url === '/') {
+            res.writeHead(200, { 'Content-Type': 'text/plain' });
+            res.end('Bot is online!');
+        } else {
+            res.writeHead(404, { 'Content-Type': 'text/plain' });
+            res.end('Not Found');
+        }
+    });
+
+    const port = process.env.PORT || 3000;
+    server.listen(port, () => {
+        console.log(`Web server listening on port ${port} to prevent sleeping.`);
+    });
 });
 
 client.on('guildMemberAdd', member => {
